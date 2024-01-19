@@ -86,7 +86,7 @@ for fuel in fuel_to_run:
    
     xaty0 = xpenultimate + (0-ypenultimate)*(xfin-xpenultimate)/(yfin-ypenultimate)
 
-    print("fuel %g landed after %8.4f seconds at (%e,%e)"%(fuel,t[-1],x[-1],t[-1]))
+    #print("fuel %g landed after %8.4f seconds at (%e,%e)"%(fuel,t[-1],x[-1],t[-1]))
     plt.plot(x,y)
     ranges.append(xaty0)
     final_y.append(yfin)
