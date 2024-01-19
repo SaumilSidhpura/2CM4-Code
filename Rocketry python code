@@ -1,1 +1,105 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
 
+This is a temporary script file.
+"""
+flex_code_string = """  TITLE 'Projectile Motion'
+COORDINATES cartesian2
+VARIABLES
+r(threshold=0.1)=vector(rx,ry)
+v(threshold=0.1)=vector(vx,vy)
+SELECT
+ngrid = 1 !since we're not using spatial depenedence within the object we don't need a dense mesh
+DEFINITIONS
+vi=21
+thetai=%s* pi/180
+mi=5
+q= 1
+vfuel= 500
+g=9.81
+
+mfueli=0.8*mi
+mDry = mi-mfueli
+tfuel = mfueli/q
+mfuel = if (t<tfuel) then mfueli - q*t else 0
+Ftmag= if (t<tfuel) then q *vfuel else 0
+m = mDry + mfuel
+vwind = vector(0,0)
+vrel = v-vwind
+Area = 0.0025
+CD= 0.3
+rhoAir = 1.2
+Fdrag = 0.5*rhoAir*CD*Area* (-vrel*magnitude(vrel))
+vhat=v/magnitude(v)
+Ft = Ftmag*vhat
+Fg= m*vector(0,-g)
+a= (Ft+Fdrag+Fg)/m
+ay = (Ft+Fdrag+Fg)/m  !acceleration due to gravity only
+INITIAL VALUES
+v=vi*vector(cos(thetai),sin(thetai))
+EQUATIONS
+r: dt(r)=v
+v:dt(v)=a
+ 
+BOUNDARIES { The domain definition }
+REGION 1 { For each material region }
+START(0,0) { Walk the domain boundary }
+LINE TO (1,0) TO (1,1) TO (0,1) TO CLOSE
+TIME 0 TO 200 halt (ry<0) { if time dependent }
+
+PLOTS
+for t = 0 by endtime/50 to endtime
+history(ry) at (0,0) vs rx
+history(rx,ry) at(0,0)   Export Format '#t#b#1#b#2' file='test.txt'
+!printonly
+report val(rx,0,0)  
+End """
+
+flex_filename = "tempflexfile.pde"
+
+import subprocess
+import numpy as np
+import matplotlib.pyplot as plt
+
+fuel_to_run = np.linspace(37,39,11)
+
+ranges=[]
+maxrange=0
+bestangle=0
+final_y=[]
+for fuel in fuel_to_run:
+    with open(flex_filename,"w") as f:
+        print(flex_code_string%fuel, file=f)
+
+    subprocess.run(["C:\Program Files\FlexPDE7\FlexPDE7.exe","-S",flex_filename],timeout=10)
+    with open(flex_filename[:-4]+"_output\\test.txt") as f:
+        data=np.loadtxt(f, skiprows=7)
+    t = data[:,0]
+    x = data[:,1]
+    y = data[:,2]
+    endtime = t[-1]
+    xfin=x[-1]
+    yfin=y[-1]
+    xpenultimate=x[-2]
+    ypenultimate=y[-2]
+   
+    xaty0 = xpenultimate + (0-ypenultimate)*(xfin-xpenultimate)/(yfin-ypenultimate)
+
+    print("angle %g landed after %8.4f seconds at (%e,%e)"%(fuel,t[-1],x[-1],t[-1]))
+    plt.plot(x,y)
+    ranges.append(xaty0)
+    final_y.append(yfin)
+    if(xfin>maxrange):
+        maxrange=xfin
+        bestangle=fuel
+print(f"best angle was {bestangle} deg which had range {maxrange}m.")  
+         
+plt.legend(fuel_to_run)
+plt.show()
+
+plt.plot(fuel_to_run, ranges, '*-')
+plt.show()
+
+plt.plot(fuel_to_run, final_y, '*')
+plt.show()
