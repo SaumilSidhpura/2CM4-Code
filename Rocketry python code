@@ -66,7 +66,7 @@ fuel_to_run = np.linspace(37,39,11)
 
 ranges=[]
 maxrange=0
-bestangle=0
+bestfuel=0
 final_y=[]
 for fuel in fuel_to_run:
     with open(flex_filename,"w") as f:
@@ -86,14 +86,14 @@ for fuel in fuel_to_run:
    
     xaty0 = xpenultimate + (0-ypenultimate)*(xfin-xpenultimate)/(yfin-ypenultimate)
 
-    print("angle %g landed after %8.4f seconds at (%e,%e)"%(fuel,t[-1],x[-1],t[-1]))
+    print("fuel %g landed after %8.4f seconds at (%e,%e)"%(fuel,t[-1],x[-1],t[-1]))
     plt.plot(x,y)
     ranges.append(xaty0)
     final_y.append(yfin)
     if(xfin>maxrange):
         maxrange=xfin
-        bestangle=fuel
-print(f"best angle was {bestangle} deg which had range {maxrange}m.")  
+        bestfuel=fuel
+print(f"best fuel was {bestfuel} deg which had range {maxrange}m.")  
          
 plt.legend(fuel_to_run)
 plt.show()
