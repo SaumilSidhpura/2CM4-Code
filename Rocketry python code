@@ -62,8 +62,13 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 
-fuel_to_run = np.linspace(37,39,11)
-
+j=0
+fuel_to_run = []
+for i in 36117
+    fuels_to_run[j]=i
+    j+=1
+    i+=2000   
+      
 ranges=[]
 maxrange=0
 bestfuel=0
