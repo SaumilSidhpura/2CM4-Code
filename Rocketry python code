@@ -5,56 +5,93 @@ Spyder Editor
 This is a temporary script file.
 """
 flex_code_string = """  TITLE 'Projectile Motion'
-COORDINATES cartesian2
+TITLE 'Multiphysics Assignment 1'
+COORDINATES cartesian1
 VARIABLES
-r(threshold=0.1)=vector(rx,ry)
-v(threshold=0.1)=vector(vx,vy)
+vy(threshold=0.1) !velocity in y
+yd(threshold=0.1) !y-displacement
 SELECT
-ngrid = 1 !since we're not using spatial depenedence within the object we don't need a dense mesh
+ngrid = 1 
 DEFINITIONS
-vi=21
-thetai=%s* pi/180
-mi=5
-q= 1
-vfuel= 500
-g=9.81
+m_fuel1=%s !Introductory fuel value
+m_fuel2=614000/17-m_fuel1!Sets initial fuel conditions, based on a cost equation relations
 
-mfueli=0.8*mi
-mDry = mi-mfueli
-tfuel = mfueli/q
-mfuel = if (t<tfuel) then mfueli - q*t else 0
-Ftmag= if (t<tfuel) then q *vfuel else 0
-m = mDry + mfuel
-vwind = vector(0,0)
-vrel = v-vwind
-Area = 0.0025
-CD= 0.3
-rhoAir = 1.2
-Fdrag = 0.5*rhoAir*CD*Area* (-vrel*magnitude(vrel))
-vhat=v/magnitude(v)
-Ft = Ftmag*vhat
-Fg= m*vector(0,-g)
-a= (Ft+Fdrag+Fg)/m
-ay = (Ft+Fdrag+Fg)/m  !acceleration due to gravity only
+qdot1=2000
+vfuel1=2500 
+m_engine1=320 
+m_tank1=30*(1+m_fuel1/2000) !first engine and tank equations
+
+qdot2=300
+vfuel2=2800
+m_engine2=150
+m_tank2=15*(1+m_fuel2/1000) !second engine and tank equations
+
+vi = 1 !initial velocity
+m_payload=200 !payload of rocket
+
+CD=0.2
+A=1
+GC=6.674e-11
+mEarth=5.9722e24
+rEarth=6.3781e6
+Tnot=288.15
+pnot=101.325e3
+g=9.80665
+M=0.0289644
+R=8.31447
+L=0.0065 !constants for fluidic drag force and forces
+
+T1=Tnot-L*yd !temperature variations in atmosphere
+
+cond=L*yd/Tnot !condition to check if it's in the atmosphere
+p=if(cond>=1) then 0 else pnot*(1-cond)^(g*M/(R*L)) !accounts for leaving the atmosphere, rather than a negative rho
+
+rhoAir=p*M/(R*T1)
+
+tfuel1=m_fuel1/qdot1
+tfuel2=m_fuel2/qdot2+tfuel1
+
+mfuel=if(t<tfuel1) then m_fuel1-qdot1*t+m_fuel2 else if (t<tfuel2) then m_fuel2-qdot2*(t-tfuel1) else 0 !fuel usage at each stage
+m_tanks=if(t<tfuel1) then m_tank1+m_tank2 else if (t<tfuel2) then m_tank2 else 0 !assuming tank drops off after fuel is used up
+m_engines=if(t<tfuel1) then m_engine1+m_engine2 else if (t<tfuel2) then m_engine2 else 0
+
+mtotal=mfuel+m_engines+m_tanks+m_payload !total mass of each component
+
+Ft1=qdot1*vfuel1 !thrust force of each component
+Ft2=qdot2*vfuel2
+
+Ft=if(t<tfuel1) then Ft1 else if (t<tfuel2) then Ft2 else 0 !changing thrust force
+
+Fd=0.5*rhoAir*CD*A*(vy)^2 !changing drag force component
+
+gforce=GC*mEarth*mtotal/(rEarth+yd)^2 !changing gravitational force for each mass
+
+ay=(Ft-Fd-gforce)/mtotal !acceleration from thrust force
+
+KE=1/2*mtotal*vy^2
+PE=mtotal*g*(rEarth+yd) !assuming potential is taken from the centre of the planet. 
+TE=KE+PE !total energy to be kept in track of
+
 INITIAL VALUES
-v=vi*vector(cos(thetai),sin(thetai))
+vy = vi
+yd = 0
+
 EQUATIONS
-r: dt(r)=v
-v:dt(v)=a
- 
-BOUNDARIES { The domain definition }
-REGION 1 { For each material region }
-START(0,0) { Walk the domain boundary }
-LINE TO (1,0) TO (1,1) TO (0,1) TO CLOSE
-TIME 0 TO 200 halt (ry<0) { if time dependent }
+vy: dt(vy) = ay
+yd: dt(yd) = vy
+
+BOUNDARIES       { The domain definition }
+  REGION 1       { For each material region }
+    START (0)   { Walk the domain boundary }
+    LINE TO (1)
+TIME 0 TO 100 halt (mfuel=0) and p=0 { if time dependent }
 
 PLOTS
-for t = 0 by endtime/50 to endtime
-history(ry) at (0,0) vs rx
-history(rx,ry) at(0,0)   Export Format '#t#b#1#b#2' file='test.txt'
-!printonly
-report val(rx,0,0)  
-End """
+for t = 0 by endtime/100 to endtime
+	!history(yd) at (0)
+	history(yd) at (0) PrintOnly Export Format '#t#b#1#b#2' file ='Assign1FlexinOutput.txt'
+    report val (TE,0)
+END """
 
 flex_filename = "tempflexfile.pde"
 
