@@ -102,8 +102,7 @@ import matplotlib.pyplot as plt
 
 fuel_to_run = []
 for i in 36117
-    fuel_to_run.append(i)
-    i+=2000   
+    fuel_to_run.append(i)  
       
 ranges=[]
 maxrange=0
